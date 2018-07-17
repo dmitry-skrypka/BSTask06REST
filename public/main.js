@@ -1,283 +1,245 @@
 (function () {
 
-    let user = {},
+    let loginbt = document.getElementById('loginbtn'),
+        user = {},
         $loginPage = $('.login-page'),
         $chatPage = $('.chat'),
-        $loginBtn = $('.login'),
+
         $usernameInput = $('#username'),
-        $nameInput = $('#name');
-    let typing = false;
-    let timeout = undefined;
+        $nameInput = $('#name'),
+        message_list = document.getElementById('chath');
+    user_list = document.getElementById('usersl');
 
-     $loginBtn.click(function (e) {
-         console.log('login');
 
+    // let ajaxRequest = function (options) {
+    //     let url = options.url || '/';
+    //     let method = options.method || 'GET';
+    //     let callback = options.callback || function () {
+    //     };
+    //     let data = options.data || {};
+    //     let xmlHttp = new XMLHttpRequest();
+    //
+    //     xmlHttp.open(method, url, true);
+    //     xmlHttp.setRequestHeader('Content-Type', 'application/json');
+    //     xmlHttp.send(JSON.stringify(data));
+    //
+    //     xmlHttp.onreadystatechange = function () {
+    //         if (xmlHttp.status == 200 && xmlHttp.readyState === 4) {
+    //             callback(xmlHttp.responseText);
+    //         }
+    //     }
+    // };
+
+
+    loginbt.onclick = function (e) {
         e.preventDefault();
         let value = $(e.target).attr('class');
         let selector = '.' + value;
         let usernickname = $(selector + ' [name=username]').val();
+        let name = $(selector + ' [name=name]').val();
 
 
         $.ajax({
-            url: '/' + value,
+            url: '/login',
             type: 'POST',
             data: {
-                username: $(selector + ' [name=username]').val(),
-                password: $(selector + ' [name=password]').val()
-            },
-            beforeSend: () => {
-                $(selector + ' button').prop('disabled', true);
-            },
-            success: (res) => {
+                username: cleanInput($usernameInput.val().trim()),
+                name: cleanInput($nameInput.val().trim()),
+            }, success: (res) => {
 
-                localStorage.setItem('username', usernickname);
+                $loginPage.fadeOut();
+                $chatPage.show();
+                $loginPage.off('click');
 
-                // console.log(response(res))
-                // location.reload();
+                user = {
+                    username: res.username,
+                    name: res.name
+                };
+
+                getUsers();
+                getHistory()
 
             },
             error: (res) => {
                 alert(response(res));
             }
-            // complete: () => {
-            //     $(selector + ' button').prop('disabled', false);
-            // }
+
         })
-    })
+    };
+
+
+    let getUsers = function () {
+        $.ajax({
+            url: '/users',
+            type: 'GET',
+            success: (res) => {
+
+                clear(user_list)
+                for (let users of res) {
+                    addUsers(users);
+
+
+                }
+
+
+            },
+            error: (res) => {
+
+            }
+
+        })
+    };
+    let getHistory = function () {
+        $.ajax({
+            url: '/messages',
+            type: 'GET',
+            success: (res) => {
+
+
+                if (res.length > 0) {
+                    clear(message_list);
+                    for (let message of res) {
+                        addMessage(message);
+                    }
+                }
+
+
+            },
+            error: (res) => {
+                alert(response(res));
+            }
+
+        })
+    };
+
+
+    function addMessage(message) {
+
+
+        message.date = (new Date(message.date)).toLocaleString();
+        message.username = cleanInput(message.username);
+        message.content = cleanInput(message.content);
+        myname = cleanInput(user.username);
+        console.log(myname);
+
+
+        let li = createNode("li"),
+            message_data = createNode("div"),
+            message_data_name = createNode("span"),
+            message_data_time = createNode("span"),
+            message_data_content = createNode("div");
+
+        li.setAttribute("class", "");
+        message_data.setAttribute("class", "message-data");
+        message_data_name.setAttribute("class", "message-data-name");
+        message_data_time.setAttribute("class", "message_data_time");
+        message_data_content.setAttribute("class", "message my-message");
+        if (message.content.includes('@' + myname)) {
+            li.setAttribute("class", "tome");
+        }
+        message_data_name.innerHTML = message.username;
+        message_data_time.innerHTML = message.date;
+        message_data_content.innerHTML = message.content;
+
+        append(message_data, message_data_name);
+        append(message_data, message_data_time);
+        append(li, message_data);
+        append(li, message_data_content);
+
+
+        $(li).appendTo('.chat-history ul');
+
+        // $(".chat-history").animate({scrollTop: $('.chat-history')[0].scrollHeight}, 500);
+
+
+    }
+
+    function addUsers(users) {
+
+// debugger
+
+
+
+        let li = createNode("li"),
+            message_data = createNode("div"),
+            user_data_name = createNode("span"),
+            user_data_username = createNode("span");
+
+
+        li.setAttribute("class", "");
+
+
+        user_data_username.innerHTML = users.username;
+        user_data_name.innerHTML = users.name;
+
+
+        append(message_data, user_data_username);
+        append(message_data, user_data_name);
+        append(li, message_data);
+
+
+        $(li).appendTo('.chat-users ul');
 
 
 
 
-    // const setUsername = () => {
-    //     user = {
-    //         username: cleanInput($usernameInput.val().trim()),
-    //         name: cleanInput($nameInput.val().trim()),
-    //     };
-    //     if (user.username) {
-    //         // socket.emit('newUser', user);
-    //         console.log(user)
-    //     }
-    // };
-    // socket.on('login', () => {
-    //     $loginPage.fadeOut();
-    //     $chatPage.show();
-    //     $loginPage.off('click');
-    //     socket.emit('receiveHistory');
-    //     socket.emit('receiveUsers');
-    // });
-    //
-    // socket.on('message', addMessage);
-    // socket.on('global', global);
-    // socket.on('userIsTyping', userIsTyping);
-    // socket.on('userleft', gone);
+    }
 
 
-    // $loginBtn.click(function () {
-    //     setUsername()
-    // });
+    $('.chat-message button').on('click', e => {
+        e.preventDefault();
+
+        let selector = $("textarea[name='message']");
+        let messageContent = selector.val().trim();
+
+        if (messageContent !== '') {
+
+            $.ajax({
+                url: '/messages',
+                type: 'POST',
+                data: {
+                    message: messageContent,
+                    user: user.username
+
+                },
+                success: (res) => {
+
+                    addMessage(res)
+
+                },
+                error: (res) => {
+                    alert(response(res));
+                }
+
+            });
+
+            selector.val('');
+        }
+    });
 
 
-    // function userIsTyping(message) {
-    //     let statusarea = document.getElementById('status');
-    //     message.username = encodeHTML(message.username);
-    //     status = encodeHTML(message.status);
-    //     if (status == 'typing') {
-    //         statusarea.innerHTML = message.username + " is " + message.status
-    //     } else {
-    //         statusarea.innerHTML = '';
-    //     }
-    // }
+    setInterval(function () {
+        getUsers();
+        getHistory();
+    }, 5000);
 
-    // function global(message) {
-    //     message.username = encodeHTML(message.username);
-    //
-    //
-    //     let html = `
-    //         <li>
-    //
-    //             <div class="message my-message" dir="auto">${message.username} Has joined the Chat</div>
-    //         </li>`;
-    //
-    //     $(html).hide().appendTo('.chat-history ul').slideDown(200);
-    //
-    //     $(".chat-history").animate({scrollTop: $('.chat-history')[0].scrollHeight}, 1000);
-    // }
-    //
-    // function addMessage(message) {
-    //     message.date = (new Date(message.date)).toLocaleString();
-    //     message.username = encodeHTML(message.username);
-    //     message.content = encodeHTML(message.content);
-    //     myname = encodeHTML(user.username);
-    //     console.log(myname);
-    //
-    //
-    //     let li = createNode("li"),
-    //         message_data = createNode("div"),
-    //         message_data_name = createNode("span"),
-    //         message_data_time = createNode("span"),
-    //         message_data_content = createNode("div");
-    //
-    //     li.setAttribute("class", "");
-    //     message_data.setAttribute("class", "message-data");
-    //     message_data_name.setAttribute("class", "message-data-name");
-    //     message_data_time.setAttribute("class", "message_data_time");
-    //     message_data_content.setAttribute("class", "message my-message");
-    //     if (message.content.includes('@' + myname)) {
-    //         li.setAttribute("class", "tome");
-    //     }
-    //     message_data_name.innerHTML = message.username;
-    //     message_data_time.innerHTML = message.date;
-    //     message_data_content.innerHTML = message.content;
-    //
-    //     append(message_data, message_data_name);
-    //     append(message_data, message_data_time);
-    //     append(li, message_data);
-    //     append(li, message_data_content);
-    //
-    //
-    //     $(li).hide().appendTo('.chat-history ul').slideDown(200);
-    //
-    //     $(".chat-history").animate({scrollTop: $('.chat-history')[0].scrollHeight}, 500);
-    //
-    //
-    // }
-    //
-    //
-    // $('.chat-message button').on('click', e => {
-    //     e.preventDefault();
-    //
-    //     let selector = $("textarea[name='message']");
-    //     let messageContent = selector.val().trim();
-    //     console.log(messageContent);
-    //     if (messageContent !== '') {
-    //         // socket.emit('msg', messageContent, user);
-    //         selector.val('');
-    //     }
-    // });
-    // $('#typing').keydown(function (e) {
-    //
-    //     if (e.which != 13 && e.keyCode != 13) {
-    //         onKeyDownNotEnter()
-    //     }
-    // });
-    // $('#disconnect').click(function () {
-    //     socket.emit('userleft');
-    //     socket.disconnect();
-    //     location.reload();
-    // });
+    function createNode(element) {
+        return document.createElement(element);
+    }
 
-    // socket.on('history', messages => {
-    //     for (let message of messages) {
-    //         addMessage(message);
-    //     }
-    // });
+    function append(parent, el) {
+        return parent.appendChild(el);
+    }
 
-    // socket.on('users', users => {
-    //     console.log(users);
-    //     users.forEach(function (user) {
-    //         addUser(user);
-    //     })
-    //
-    // });
-    // socket.on('addUser', user => {
-    //
-    //     singlUser(user)
-    //
-    // });
+    function clear(parentElem) {
 
-    // function addUser(user) {
-    //
-    //     user.username = encodeHTML(user.username);
-    //     user.name = encodeHTML(user.name);
-    //
-    //
-    //     let html = `
-    //         <li>
-    //             <div class="user">
-    //                 <span class="name">${user.username}</span>
-    //                 <span class="name">${user.name}</span>
-    //
-    //             </div>
-    //
-    //         </li>`;
-    //
-    //     $(html).hide().appendTo('.chat-users ul').slideDown(200);
-    //
-    //     $(".chat-users").animate({scrollTop: $('.chat-users')[0].scrollHeight}, 1000);
-    // }
-    //
-    // function singlUser(user) {
-    //
-    //     user.username = encodeHTML(user.username);
-    //     user.name = encodeHTML(user.name);
-    //
-    //     let html = `
-    //         <li>
-    //             <div class="user">
-    //                 <span class="name">${user.username}</span>
-    //            <span class="name">${user.name}</span>
-    //             </div>
-    //
-    //         </li>`;
-    //
-    //     $(html).hide().appendTo('.chat-users ul').slideDown(200);
-    //
-    //     $(".chat-users").animate({scrollTop: $('.chat-users')[0].scrollHeight}, 1000);
-    // }
-    //
-    //
-    // function timeoutFunction() {
-    //     typing = false;
-    //     socket.emit('noLongerTypingMessage');
-    // }
-    //
-    // function onKeyDownNotEnter() {
-    //     if (typing == false) {
-    //         typing = true;
-    //         socket.emit('typingMessage');
-    //
-    //         timeout = setTimeout(timeoutFunction, 5000);
-    //     } else {
-    //         clearTimeout(timeout);
-    //         timeout = setTimeout(timeoutFunction, 5000);
-    //     }
-    //
-    // }
-    //
-    //
-    // function createNode(element) {
-    //     return document.createElement(element);
-    // }
-    //
-    // function append(parent, el) {
-    //     return parent.appendChild(el);
-    // }
-    //
-    //
-    // function encodeHTML(str) {
-    //     return $('<div />').text(str).html();
-    // }
-    //
+        let element = parentElem;
+        while (element.firstChild) {
+            element.removeChild(element.firstChild);
+        }
+    }
+
     const cleanInput = (input) => {
         return $('<div/>').text(input).html();
     }
-    //
-    //
-    // function gone(message) {
-    //     message.username = encodeHTML(message.username);
-    //
-    //
-    //     let html = `
-    //         <li>
-    //
-    //             <div class="message my-message" dir="auto">${message} Has left</div>
-    //         </li>`;
-    //
-    //     $(html).hide().appendTo('.chat-history ul').slideDown(200);
-    //
-    //     $(".chat-history").animate({scrollTop: $('.chat-history')[0].scrollHeight}, 1000);
-    // }
-
 })();
-
-

@@ -34,17 +34,67 @@ mongoose.connect('mongodb://localhost:27017/chat', {useNewUrlParser: true});
         res.sendFile(__dirname + "/style.css");
     });
 
-    app.get('/messages', (req, res) => {
-        res.json(messages);
+    app.get('/messages', async (req, res) => {
+        try {
+            let messages = await   MessageModel
+                .find()
+                .sort({$natural: 1})
+                .limit(100)
+                .exec((err, messages) => {
+                    if (!err) {
+                        res.json(messages);
+                    }
+                })
+        }catch (e) {
+            console.log('E, login,', e);
+            res.status(500).send({message: 'error'})
+        }
+
+
+
     });
 
-    app.post('/messages', (req, res) => {
-        messages.push(req.body);
+    app.post('/messages', async(req, res) => {
+        try {
+
+        const obj = {
+            date: new Date(),
+            content: req.body.message,
+            username: req.body.user
+        };
+        MessageModel.create(obj, err => {
+            if (err) return console.error("MessageModel, err");
+
+        });res.json(obj)
+        }catch (e) {
+            console.log('E, login,', e);
+            res.status(500).send({message: 'error'})
+        }
+
+
     });
+
+    app.get('/users', async (req, res) =>{
+        try {
+      let users = await UserModel
+                .find({})
+                .lean()
+                .exec((err, users) => {
+                    if (!err) {
+                        res.json(users);
+                        console.log(users);
+                    }
+                })
+        }catch (e) {
+            console.log('E, login,', e);
+            res.status(500).send({message: 'error'})
+        }
+
+    });
+
 
 app.post('/login', async (req, res) => {
-    console.log(req);
-    console.log(req.username)
+console.log(req.body)
     try {
         let user = await UserModel.findOneAndUpdate({username: req.body.username, name: req.body.name}, req.name, {
             new: true,
@@ -56,8 +106,8 @@ app.post('/login', async (req, res) => {
         });
         // console.log('memem')
 
-
-        res.status(200).send({message:"User Login success"})
+        res.json(user);
+        // res.status(200).send({message:"User Login success"})
 
 
     } catch (e) {
