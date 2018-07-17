@@ -1,0 +1,28 @@
+{
+  "name": "bstask06rest",
+  "version": "1.0.0",
+  "description": "nodejs chat w/o socketsIO",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dmitry-skrypka/BSTask06REST.git"
+  },
+  "keywords": [
+    "nodejs"
+  ],
+  "author": "Dmitry Skrypka",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dmitry-skrypka/BSTask06REST/issues"
+  },
+  "homepage": "https://github.com/dmitry-skrypka/BSTask06REST#readme",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "mongoose": "^5.2.4"
+  }
+}
