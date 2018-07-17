@@ -167,6 +167,7 @@
 
 
         li.setAttribute("class", "");
+        user_data_name.setAttribute("class", "message_data_time");
 
 
         user_data_username.innerHTML = users.username;
