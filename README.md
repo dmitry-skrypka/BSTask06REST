@@ -1,1 +1,2 @@
-# BSTask06REST
+
+simple chat with RESt API
